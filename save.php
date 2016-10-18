@@ -10,6 +10,7 @@ function response($data, $code = 200, $status = "OK"){
 
 if(checkvar($_POST['message'])){
 	$file = "messages.json";
+	$limit = 10;
 
 	$data = NULL;
 	if(file_exists($file)){ $data = file_get_contents($file); }
@@ -17,7 +18,7 @@ if(checkvar($_POST['message'])){
 	else{ $data = array(); }
 
 	$data[] = $_POST['message'];
-	if(count($data) > 10){
+	if(count($data) > $limit){
 		unset($data[0]);
 	}
 	$data = array_values($data);
