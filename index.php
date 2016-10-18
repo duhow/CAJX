@@ -7,7 +7,14 @@
 	<link href="css/font-awesome.min.css" rel="stylesheet" type="text/css">
 	<script src="js/jquery-3.1.1.min.js"></script>
 	<script src="js/bootstrap.min.js"></script>
+	<script src="js/linkify.min.js"></script>
+	<script src="js/linkify-html.min.js"></script>
+	<script src="js/linkify-jquery.min.js"></script>
+	<script src="js/linkify-plugin-hashtag.min.js"></script>
+	<script src="js/linkify-plugin-mention.min.js"></script>
+	<script src="js/linkify-string.min.js"></script>
 	<script src="js/ion.sound.min.js"></script>
+	<script src="js/showdown.min.js"></script>
 	<script>
 	ion.sound({
 	    sounds: [
@@ -23,7 +30,7 @@
 	});
 	</script>
 	<script src="js/md5.js"></script>
-	<script src="js/aes.js"></script>
+	<script src="js/aes-js.min.js"></script>
 	<style type="text/css">
 		body{
 			background: url('background.jpg') repeat;
@@ -104,6 +111,11 @@ function cleaninput(){
 }
 
 function addmsg(user, msj){
+	msj = msj.linkify();
+	var md = new showdown.Converter();
+	msj = md.makeHtml(msj);
+	msj = msj.substring(3, msj.length - 4); // remove <p> TAG.
+
 	$("output").append("<p><b>" + user + "</b>" + "<span>" + msj + "</span></p>");
 }
 
