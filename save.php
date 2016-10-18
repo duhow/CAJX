@@ -18,11 +18,9 @@ if(checkvar($_POST['message'])){
 
 	$data[] = $_POST['message'];
 	if(count($data) > 10){
-		/* for($i = 10; $i < count($data); $i++){
-			unset($data[$i]);
-		} */
 		unset($data[0]);
 	}
+	$data = array_values($data);
 
 	file_put_contents($file, json_encode($data));
 

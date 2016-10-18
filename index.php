@@ -7,11 +7,26 @@
 	<link href="css/font-awesome.min.css" rel="stylesheet" type="text/css">
 	<script src="js/jquery-3.1.1.min.js"></script>
 	<script src="js/bootstrap.min.js"></script>
+	<script src="js/ion.sound.min.js"></script>
+	<script>
+	ion.sound({
+	    sounds: [
+	        {name: "send"},
+	        {name: "receive"},
+	        {name: "error"},
+	    ],
+	    // main config
+	    path: "sounds/",
+	    preload: true,
+	    multiplay: true,
+	    volume: 0.8
+	});
+	</script>
 	<script src="js/md5.js"></script>
 	<script src="js/aes.js"></script>
 	<style type="text/css">
 		body{
-			background: url('https://s-media-cache-ak0.pinimg.com/originals/07/b3/7d/07b37d9e8af59caf15b0f8e1b49da368.jpg') repeat;
+			background: url('background.jpg') repeat;
 		}
 
 		output{
@@ -79,6 +94,7 @@ var username = null;
 var key = null;
 var etag = null;
 var kdect = "|||";
+var last_timestamp = null;
 var timerload;
 var delay = 1500;
 
@@ -124,6 +140,7 @@ function newmessages(){
     	if(etag != tag){
     		etag = tag;
     		console.log("nuevos mensajes");
+    		// ion.sound.play('receive');
     		loadmsg();
     	}
     	setTimeout(function(){ newmessages() }, delay);
@@ -135,11 +152,17 @@ function loadmsg(){
 		dataType: 'json',
 		url: 'messages.json?' + new Date().getTime(),
 	}).done(function(r){
-		cleanmsg();
+		// cleanmsg();
 		$.each(r, function(i){
 			var m = decode(r[i]);
 			if(m.substring(0, 3) == kdect){
-				addmsg("Otro", m.substring(3));
+				data = m.substring(3).split("|");
+				if(data[1] > last_timestamp){
+					last_timestamp = data[1];
+					if(data[0] != username){
+						addmsg(data[0], decodeURIComponent(data[2]));
+					}
+				}
 			}
 		});
 	});
@@ -153,6 +176,11 @@ $(function(){
 	$("input[name=password]").keypress(function(e){
 		if(e.which == 13){
 			$("#login-button").trigger('click');
+		}
+	});
+	$("html").keyup(function(e){
+		if(e.which == 27){
+			$("input[name=message]").focus().select();
 		}
 	});
 	$("#login-button").click(function(){
@@ -181,9 +209,12 @@ $(function(){
 
 		var msj = $.trim($("input[name=message]").val());
 		if(msj == ""){ return; }
-		msj = kdect + msj;
-		while(msj.length % 16 != 0){ msj = msj + " "; }
-		var msb = aesjs.util.convertStringToBytes(msj);
+		// ------------
+		// https://www.sitepoint.com/community/t/encode-accented-letters-in-utf-8-charset/22968/2
+		// ------------
+		text = kdect + username + "|" + Math.floor(Date.now()) + "|" + encodeURIComponent(msj);
+		while(text.length % 16 != 0){ text = text + " "; }
+		var msb = aesjs.util.convertStringToBytes(text);
 
 		var ivp = md5(Math.random() * 100000000).substring(0, 16);
 		var iv = aesjs.util.convertStringToBytes(ivp);
@@ -207,9 +238,11 @@ $(function(){
 			url: 'save.php',
 			method: 'POST'
 		}).done(function(ret){
-			addmsg(username, msj.substring(kdect.length));
+			addmsg(username, msj);
+			ion.sound.play('send');
 			cleaninput();
 		}).fail(function(ret){
+			ion.sound.play('error');
 			alert("Error: \n" + ret);
 			console.log(ret);
 		});
